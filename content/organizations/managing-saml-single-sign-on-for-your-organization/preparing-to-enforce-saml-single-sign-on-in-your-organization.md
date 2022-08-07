@@ -1,21 +1,20 @@
 ---
 title: Preparing to enforce SAML single sign-on in your organization
 intro: 'Before you enforce SAML single sign-on in your organization, you should verify your organization''s membership and configure the connection settings to your identity provider.'
-product: '{% data reusables.gated-features.saml-sso %}'
 redirect_from:
   - /articles/preparing-to-enforce-saml-single-sign-on-in-your-organization
   - /github/setting-up-and-managing-organizations-and-teams/preparing-to-enforce-saml-single-sign-on-in-your-organization
 versions:
-  fpt: '*'
+  ghec: '*'
 topics:
   - Organizations
   - Teams
 shortTitle: Prepare to enforce SAML SSO
 ---
 
-When you enforce SAML single sign-on in your organization, members that haven't authenticated via your identity provider (IdP) will be removed from the organization and will receive an email notifying them about the removal.
+{% data reusables.saml.ghec-only %}
 
-Before enforcing SAML SSO in your organization, you should review organization membership, enable SAML SSO, and review organization members' SAML access. For more information, see the following.
+{% data reusables.saml.when-you-enforce %} Before enforcing SAML SSO in your organization, you should review organization membership, enable SAML SSO, and review organization members' SAML access. For more information, see the following.
 
 | Task | More information |
 | :- | :- |

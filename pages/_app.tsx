@@ -2,20 +2,26 @@ import React, { useEffect } from 'react'
 import App from 'next/app'
 import type { AppProps, AppContext } from 'next/app'
 import Head from 'next/head'
-import { useTheme, ThemeProvider } from '@primer/components'
-import { defaultThemeProps, getThemeProps } from 'components/lib/getThemeProps'
+import { ThemeProvider, SSRProvider, ThemeProviderProps } from '@primer/react'
 
 import '../stylesheets/index.scss'
 
-import events from 'javascripts/events'
-import experiment from 'javascripts/experiment'
+import events from 'components/lib/events'
+import experiment from 'components/lib/experiment'
+import { useSession } from 'components/hooks/useSession'
 
-type MyAppProps = AppProps & { csrfToken: string; themeProps: typeof defaultThemeProps }
-const MyApp = ({ Component, pageProps, csrfToken, themeProps }: MyAppProps) => {
+type MyAppProps = AppProps & {
+  isDotComAuthenticated: boolean
+}
+
+type colorModeAuto = Pick<ThemeProviderProps, 'colorMode'>
+
+const MyApp = ({ Component, pageProps }: MyAppProps) => {
+  const { session, isLoadingSession } = useSession()
   useEffect(() => {
-    events()
+    events(session?.csrfToken)
     experiment()
-  }, [])
+  }, [session])
 
   return (
     <>
@@ -24,8 +30,14 @@ const MyApp = ({ Component, pageProps, csrfToken, themeProps }: MyAppProps) => {
         <title>GitHub Documentation</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        <link rel="alternate icon" type="image/png" href="/assets/images/site/favicon.png" />
-        <link rel="icon" type="image/svg+xml" href="/assets/images/site/favicon.svg" />
+        {/* The value in these "/cb-xxxxx" prefixes aren't important. They
+            just need to be present. They help the CDN cache the asset
+            for infinity.
+            Just remember, if you edit these images on disk, remember to
+            change these numbers
+         */}
+        <link rel="alternate icon" type="image/png" href="/assets/cb-600/images/site/favicon.png" />
+        <link rel="icon" type="image/svg+xml" href="/assets/cb-803/images/site/favicon.svg" />
 
         <meta
           name="google-site-verification"
@@ -35,35 +47,45 @@ const MyApp = ({ Component, pageProps, csrfToken, themeProps }: MyAppProps) => {
           name="google-site-verification"
           content="c1kuD-K2HIVF635lypcsWPoD4kilo5-jA_wBFyT4uMY"
         />
-
-        <meta name="csrf-token" content={csrfToken} />
       </Head>
-      <ThemeProvider>
-        <SetTheme themeProps={themeProps} />
-        <Component {...pageProps} />
-      </ThemeProvider>
+      <SSRProvider>
+        <ThemeProvider
+          colorMode={
+            (session?.theme?.colorMode as colorModeAuto['colorMode']) ||
+            ('auto' as colorModeAuto['colorMode'])
+          }
+          dayScheme={session?.theme?.dayTheme || 'light'}
+          nightScheme={session?.theme?.nightTheme || 'dark'}
+        >
+          {/* Appears Next.js can't modify <body> after server rendering: https://stackoverflow.com/a/54774431 */}
+          <div
+            data-color-mode={session?.themeCss?.colorMode || 'auto'}
+            data-dark-theme={session?.themeCss?.nightTheme || 'dark'}
+            data-light-theme={session?.themeCss?.dayTheme || 'light'}
+            style={
+              /* render a mostly gray background until we know the color mode via XHR */
+              { opacity: isLoadingSession ? 0.1 : 1 }
+            }
+          >
+            <Component {...pageProps} />
+          </div>
+        </ThemeProvider>
+      </SSRProvider>
     </>
   )
 }
 
+// Remember, function is only called once if the rendered page can
+// be in-memory cached. But still, the `<MyApp>` component will be
+// executed every time **in the client** if it was the first time
+// ever (since restart) or from a cached HTML.
 MyApp.getInitialProps = async (appContext: AppContext) => {
-  const { ctx } = appContext
   // calls page's `getInitialProps` and fills `appProps.pageProps`
   const appProps = await App.getInitialProps(appContext)
-  const req: any = ctx.req
 
-  return { ...appProps, themeProps: getThemeProps(req), csrfToken: req?.csrfToken?.() || '' }
-}
-
-const SetTheme = ({ themeProps }: { themeProps: typeof defaultThemeProps }) => {
-  // Cause primer/components to re-evaluate the 'auto' color mode on client side render
-  const { setColorMode } = useTheme()
-  useEffect(() => {
-    setTimeout(() => {
-      setColorMode(themeProps.colorMode as any)
-    })
-  }, [])
-  return null
+  return {
+    ...appProps,
+  }
 }
 
 export default MyApp

@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 
-import fs from 'fs'
-import path from 'path'
-import program from 'commander'
-import readJsonFile from '../../lib/read-json-file.js'
-import { deprecated } from '../../lib/enterprise-server-releases.js'
-const DEVELOPER_REDIRECTS_FILEPATH = 'lib/redirects/static/developer.json'
-const developerRedirects = readJsonFile(`./${DEVELOPER_REDIRECTS_FILEPATH}`)
-
 // [start-readme]
 //
 // Run this script after an Enterprise deprecation to remove redirects
 // for the deprecated version. See the Enterprise deprecation issue template for instructions.
 //
 // [end-readme]
+
+import fs from 'fs'
+import path from 'path'
+import { program } from 'commander'
+import readJsonFile from '../../lib/read-json-file.js'
+import { deprecated } from '../../lib/enterprise-server-releases.js'
+const DEVELOPER_REDIRECTS_FILEPATH = 'lib/redirects/static/developer.json'
+const developerRedirects = readJsonFile(`./${DEVELOPER_REDIRECTS_FILEPATH}`)
 
 program
   .description(
